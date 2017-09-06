@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Calculator</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        .calc{                              /* making sure there is space above the calculator text*/
+            margin-top: 50px;
+        }
+
+        .table{                             /* adding background color to the final price table*/
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+    
+
+<div class="container calc">
+    <div class="row">
+        <div class="col-md-6">
+            <div id="calc">
+                <div class="form-group">
+                    <label for="page-size">Page size</label>
+                    <select id="page-size" class="form-control">
+                        <option selected>Page size</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="qty">Amount of doublepages</label>
+                    <input class="form-control" type="number" size="3" min="1" value="1" id="qty">
+                </div>
+                <div class="form-group">
+                    <label for="cover">Cover type</label>
+                    <select class="form-control" id="cover">
+                        <option>Cover type</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Page size</td>
+                        <td class="page-size">-</td>
+                    </tr>
+                    <tr>
+                        <td>Amount of doublepages</td>
+                        <td class="qty">-</td>
+                    </tr>
+                    <tr>
+                        <td>Cover price</td>
+                        <td class="cover">-</td>
+                    </tr>
+                    <tr>
+                        <td>Price per paragraph</td>
+                        <td class="endpaper">-</td>
+                    </tr>
+                    <tr>
+                        <td>Total</td>
+                        <td class="sum">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+   
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script>
+        $(function(){
+
+            var selectSize,                     //initializing variables for the parameters 
+                selectPrice,
+                selectCover = 0,
+                endPaper = 0,
+                sum = 0,
+                qty = 1,
+                pageSizes = {
+                    "20x20": {47: "Digital Paper Type A", 53: "Digital Pearl Paper"},       //pre-defining choises for user
+                    "19х25": {53: "Digital Paper Type A", 57: "Digital Pearl Paper"},
+                    "20х30": {57: "Digital Paper Type A", 65: "Digital Pearl Paper"},
+                  
+                },
+                covers = {
+                    "20x20": {53: "Glance cover", 204: "Photo cover", 355: "Leather cover"},
+                    "19х25": {57: "Glance cover", 228: "Photo cover", 373: "Leather cover"},
+                    "20х30": {65: "Glance cover", 254: "Photo cover", 506: "Leather cover"},
+                },
+                endPapers = {
+                    "20x20": 43,
+                    "19х25": 53,
+                    "20х30": 57,
+                    "25х25": 63,
+                
+                };
+
+            function insertPageSizes(){         //allowing user to see the chosen option's details and price
+                var html = '',
+                    size,
+                    price;
+                for(size in pageSizes){
+                    for(price in pageSizes[size]){
+                        html += '<option data-size="' + size + '" data-price="' + price + '">' + size + ' - ' + pageSizes[size][price] + ' ' + price + ' €</option>';
+                    }
+                }
+                $('#page-size').append(html);
+            }
+
+            function changeSize(){                  //calculating the price depending on the selected size
+                sum = selectCover = 0;
+                qty = 1;
+                $('#qty').val('1');
+
+                selectSize = $('#calc option').filter(':selected').data('size');
+                selectPrice = $('#calc option').filter(':selected').data('price');
+
+                insertCover();
+                recalc();
+            }
+
+            function insertCover(){
+                var html = '<option selected>Cover type</option>', price;
+
+                for(price in covers[selectSize]){
+                    html += '<option data-price="' + price + '">' + covers[selectSize][price] + ' ' + price + ' € </option>';
+                } 
+                $('#cover').html(html);
+            }
+
+            function changeQty(){                   //making sure the value for page quantity is never a "0"
+                qty = $('#qty').val();
+                if(qty < 1){
+                    qty = 1;
+                    $('#qty').val('1');
+                }
+                recalc();
+            }
+
+            function changeCover(){                                  // if option chosen has been changed, the price is recalculated 
+                selectCover = $('#cover option').filter(':selected').data('price');
+                recalc();
+            }
+
+            function isNumeric(n){                      //function checks the input is a numeric value
+                return !isNaN(parseFloat(n)) && isFinite(n); 
+            }
+
+            function recalc(){                                                   //calculating the prices for different options chosen 
+                selectPrice = isNumeric(selectPrice) ? selectPrice: 0;
+                qty = isNumeric(qty) ? qty: 1;
+                selectCover = isNumeric(selectCover) ? selectCover: 0;
+                endPaper = isNumeric(endPapers[selectSize]) ? endPapers[selectSize] : 0;
+                sum = selectPrice * qty + selectCover + endPaper;
+                changeTable();
+            }
+
+            function changeTable(){                             //displaying the changes to prices upon user's new inputs
+                $(' .page-size').text(selectPrice + ' €');
+                $(' .qty').text(qty);
+                $(' .cover').text(selectCover + ' €');
+                $(' .endpaper').text(endPaper + ' €');
+                $(' .sum').text(sum + ' €');
+            }
+
+            insertPageSizes();
+
+            $('#page-size').change(function(){      //calling seperate functions for values entered upon user's new inputs
+                changeSize();
+            });
+
+            $('#qty').change(function(){
+                changeQty();
+            });
+
+            $('#cover').change(function(){
+                changeCover();
+            });
+
+        });
+    </script>
+</body>
+</html>
